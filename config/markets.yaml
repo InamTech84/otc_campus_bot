@@ -1,0 +1,152 @@
+# OTC Campus Bot — Version 1 Markets
+
+commodities:
+  - symbol: CL=F
+    display_name: "CL1!"
+    asset_class: "energy"
+    cftc_code: "067651"
+    description: "WTI Crude Oil"
+  - symbol: NG=F
+    display_name: "NG1!"
+    asset_class: "energy"
+    cftc_code: "023651"
+    description: "Natural Gas"
+  - symbol: GC=F
+    display_name: "GC1!"
+    asset_class: "metal"
+    cftc_code: "088691"
+    description: "Gold"
+  - symbol: SI=F
+    display_name: "SI1!"
+    asset_class: "metal"
+    cftc_code: "084691"
+    description: "Silver"
+  - symbol: HG=F
+    display_name: "HG1!"
+    asset_class: "metal"
+    cftc_code: "085692"
+    description: "Copper"
+
+fx_futures:
+  - symbol: EURUSD=X
+    display_name: "6E1!"
+    asset_class: "fx"
+    cftc_code: "099741"
+    description: "Euro FX"
+  - symbol: GBPUSD=X
+    display_name: "6B1!"
+    asset_class: "fx"
+    cftc_code: "096742"
+    description: "British Pound"
+  - symbol: AUDUSD=X
+    display_name: "6A1!"
+    asset_class: "fx"
+    cftc_code: "232741"
+    description: "Australian Dollar"
+  - symbol: NZDUSD=X
+    display_name: "6N1!"
+    asset_class: "fx"
+    cftc_code: "112741"
+    description: "New Zealand Dollar"
+  - symbol: USDCHF=X
+    display_name: "6S1!"
+    asset_class: "fx"
+    cftc_code: "092741"
+    description: "Swiss Franc"
+  - symbol: USDCAD=X
+    display_name: "6C1!"
+    asset_class: "fx"
+    cftc_code: "090741"
+    description: "Canadian Dollar"
+  - symbol: USDJPY=X
+    display_name: "6J1!"
+    asset_class: "fx"
+    cftc_code: "097741"
+    description: "Japanese Yen"
+  - symbol: USDINDEX=X
+    display_name: "DX1!"
+    asset_class: "fx"
+    cftc_code: "098662"
+    description: "US Dollar Index"
+
+indices:
+  - symbol: ES=F
+    display_name: "ES1!"
+    asset_class: "index"
+    description: "E-mini S&P 500"
+  - symbol: NQ=F
+    display_name: "NQ1!"
+    asset_class: "index"
+    description: "E-mini Nasdaq-100"
+  - symbol: YM=F
+    display_name: "YM1!"
+    asset_class: "index"
+    description: "E-mini Dow Jones"
+  - symbol: RTY=F
+    display_name: "RTY1!"
+    asset_class: "index"
+    description: "E-mini Russell 2000"
+
+stocks:
+  - symbol: AAPL
+    display_name: "AAPL"
+    asset_class: "stock"
+    description: "Apple Inc."
+  - symbol: TSLA
+    display_name: "TSLA"
+    asset_class: "stock"
+    description: "Tesla Inc."
+  - symbol: NVDA
+    display_name: "NVDA"
+    asset_class: "stock"
+    description: "NVIDIA Corp."
+  - symbol: MSFT
+    display_name: "MSFT"
+    asset_class: "stock"
+    description: "Microsoft Corp."
+  - symbol: AMZN
+    display_name: "AMZN"
+    asset_class: "stock"
+    description: "Amazon Inc."
+
+# Timeframes for analysis
+timeframes:
+  commodities: ["1d", "1w"]
+  fx: ["1d", "1w"]
+  indices: ["1d", "1w"]
+  stocks: ["1d", "1w"]
+
+# Score weights by asset class
+weights:
+  commodities:
+    trend: 0.15
+    cot_net: 0.25
+    cot_index: 0.25
+    valuation: 0.15
+    seasonality: 0.10
+    retail: 0.05
+    technical: 0.05
+
+  fx:
+    retail: 0.25
+    commercials: 0.15
+    cot_net: 0.15
+    fund_manager: 0.15
+    valuation: 0.15
+    seasonality: 0.10
+    trend: 0.05
+
+  equities:
+    valuation_13w: 0.30
+    valuation_30d: 0.20
+    election_cycle: 0.20
+    decennial: 0.15
+    trend: 0.05
+    technical: 0.10
+
+# Thresholds
+thresholds:
+  valuation_undervalued: -75
+  valuation_overvalued: 75
+  valuation_near: 15  # range around threshold to mention
+  seasonality_lookback_years: 10
