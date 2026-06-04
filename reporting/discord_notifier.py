@@ -35,9 +35,8 @@ class DiscordNotifier:
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
         
         # Build sections
-        cot_section = self._build_cot_section(results)
-        valuation_section = self._build_valuation_section(results)
-        seasonality_section = self._build_seasonality_section(results)
+        ranking_section = self._build_ranking_section(results)
+        detailed_section = self._build_detailed_section(results)
         
         content = f"""🎓 **OTC Campus Weekly Scanner Report**
 📅 {timestamp}
@@ -48,85 +47,84 @@ class DiscordNotifier:
 • Indices: {len(results.get('indices', []))}
 • Stocks: {len(results.get('stocks', []))}
 
-{cot_section}
+{ranking_section}
 
-{valuation_section}
+{detailed_section}
 
-{seasonality_section}
+**Status:** ✅ Phase 4: Market Ranking loaded.
 
-**Status:** ✅ Phase 3: Valuation & Seasonality loaded.
-
-*Phase 4 (Market Ranking & Technical) coming next...*"""
+*Phase 5 (Technical S/D Zones) coming next...*"""
         
         self.send_message(content)
     
-    def _build_cot_section(self, results: Dict[str, Any]) -> str:
-        """Build COT analysis display section"""
-        commodities = results.get('commodities', [])
-        fx = results.get('fx', [])
+    def _build_ranking_section(self, results: Dict[str, Any]) -> str:
+        """Build market ranking display section"""
+        ranked = results.get('ranked_results', {})
         
-        cot_lines = ["**COT Net Analysis:**"]
+        bullish = ranked.get('bullish_markets', [])
+        bearish = ranked.get('bearish_markets', [])
         
-        # Show commodities
-        for market in commodities[:3]:
-            symbol = market['symbol']
-            cot_net = market.get('cot_net', {})
-            bias = cot_net.get('bias', 'neutral').upper()
-            score = cot_net.get('score', 0.0)
-            
-            bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
-            cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f})")
+        lines = []
         
-        cot_lines.append("")
+        # Bullish markets
+        if bullish:
+            lines.append("**🟢 BULLISH Markets:**")
+            for market in bullish[:3]:
+                symbol = market['symbol']
+                score = market['final_score']
+                conviction = market['conviction']
+                lines.append(f"  {symbol} | Score: {score:+.2f} ({conviction})")
         
-        # Show FX
-        for market in fx[:2]:
-            symbol = market['symbol']
-            cot_net = market.get('cot_net', {})
-            bias = cot_net.get('bias', 'neutral').upper()
-            score = cot_net.get('score', 0.0)
-            
-            bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
-            cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f})")
+        lines.append("")
         
-        return "\n".join(cot_lines)
+        # Bearish markets
+        if bearish:
+            lines.append("**🔴 BEARISH Markets:**")
+            for market in bearish[:3]:
+                symbol = market['symbol']
+                score = market['final_score']
+                conviction = market['conviction']
+                lines.append(f"  {symbol} | Score: {score:+.2f} ({conviction})")
+        
+        # Actionable
+        actionable = ranked.get('top_actionable', [])
+        if actionable:
+            lines.append("")
+            lines.append(f"**⚡ Actionable Setups (|score| >= 1.0): {len(actionable)}**")
+            for market in actionable:
+                symbol = market['symbol']
+                bias = "🟢 LONG" if market['final_bias'] == 'bullish' else "🔴 SHORT"
+                score = market['final_score']
+                lines.append(f"  {bias} {symbol} (Score: {score:+.2f})")
+        
+        return "\n".join(lines) if lines else "No ranked data yet"
     
-    def _build_valuation_section(self, results: Dict[str, Any]) -> str:
-        """Build valuation display section"""
-        commodities = results.get('commodities', [])
+    def _build_detailed_section(self, results: Dict[str, Any]) -> str:
+        """Build detailed analysis section"""
+        ranked = results.get('ranked_results', {})
+        top_actionable = ranked.get('top_actionable', [])
         
-        val_lines = ["**Valuation Analysis:**"]
+        lines = ["**📊 Top Setup Details:**"]
         
-        for market in commodities[:3]:
-            symbol = market['symbol']
-            valuation = market.get('valuation', {})
-            state = valuation.get('valuation_state', 'neutral')
-            dev = valuation.get('deviation_pct', 0.0)
-            
-            state_emoji = "🟢" if 'under' in state else "🔴" if 'over' in state else "⚪"
-            val_lines.append(f"{state_emoji} {symbol} | {state} (Dev: {dev:+.1f}%)")
+        if top_actionable:
+            for market in top_actionable[:2]:
+                symbol = market['symbol']
+                bias = market['final_bias'].upper()
+                score = market['final_score']
+                conviction = market['conviction'].upper()
+                breakdown = market.get('breakdown', {})
+                
+                lines.append(f"\n**{symbol}** | {bias} ({conviction}) | Score: {score:+.2f}")
+                lines.append(f"  COT Net: {breakdown.get('cot_net', 0):+.2f}")
+                lines.append(f"  Valuation: {breakdown.get('valuation', 0):+.2f}")
+                lines.append(f"  Seasonality: {breakdown.get('seasonality', 0):+.2f}")
+        else:
+            lines.append("No actionable setups with score >= 1.0")
         
-        return "\n".join(val_lines)
-    
-    def _build_seasonality_section(self, results: Dict[str, Any]) -> str:
-        """Build seasonality display section"""
-        indices = results.get('indices', [])
-        
-        seas_lines = ["**Seasonality (Equities):**"]
-        
-        for market in indices[:2]:
-            symbol = market['symbol']
-            seasonality = market.get('seasonality', {})
-            election = seasonality.get('election_cycle', 'N/A')
-            bias = seasonality.get('seasonality_bias', 'neutral').upper()
-            
-            bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
-            seas_lines.append(f"{bias_emoji} {symbol} | {election} | {bias}")
-        
-        return "\n".join(seas_lines)
+        return "\n".join(lines)
     
     def send_market_details(self, results: Dict[str, Any]):
-        content = "📊 **Detailed Market Analysis**\n\nDetailed analysis coming in Phase 4..."
+        content = "📊 **Detailed Market Analysis**\n\nDetailed analysis in summary report above."
         self.send_message(content)
     
     def send_error_report(self, error_msg: str):
