@@ -1,7 +1,7 @@
 # Discord Configuration
 
 discord:
-  webhook_url: "https://discord.com/api/webhooks/1511944260671242250/8qiWZzDYVtQ8FQ5wt0ROke2_ZS6ZhB2DxFHtWZb5Zx04yH37k2gyzBCNzSMm5Vqs5WLq"
+webhook_url: "https://discord.com/api/webhooks/1511944260671242250/8qiWZzDYVtQ8FQ5wt0ROke2_ZS6ZhB2DxFHtWZb5Zx04yH37k2gyzBCNzSMm5Vqs5WLq"
   
   # Message settings
   send_summary: true
