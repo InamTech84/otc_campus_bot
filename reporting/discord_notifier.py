@@ -35,6 +35,7 @@ class DiscordNotifier:
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
         
         ranking_section = self._build_ranking_section(results)
+        minors_section = self._build_minors_section(results)
         detailed_section = self._build_detailed_section(results)
         technical_section = self._build_technical_section(results)
         
@@ -44,18 +45,21 @@ class DiscordNotifier:
 **Markets Scanned:**
 • Commodities: {len(results.get('commodities', []))}
 • FX Futures: {len(results.get('fx', []))}
+• Forex Minors: {len(results.get('forex_minors', []))}
 • Indices: {len(results.get('indices', []))}
 • Stocks: {len(results.get('stocks', []))}
 
 {ranking_section}
 
+{minors_section}
+
 {detailed_section}
 
 {technical_section}
 
-**Status:** ✅ Phase 5: Technical Zones (Placeholder).
+**Status:** ✅ Phase 5 Complete: Forex Minors integrated.
 
-*Full S/D zone detection coming in next iteration...*"""
+*Full S/D zone detection & price integration coming next...*"""
         
         self.send_message(content)
     
@@ -69,7 +73,7 @@ class DiscordNotifier:
         lines = []
         
         if bullish:
-            lines.append("**🟢 BULLISH Markets:**")
+            lines.append("**🟢 BULLISH Markets (Majors):**")
             for market in bullish[:3]:
                 symbol = market['symbol']
                 score = market['final_score']
@@ -79,7 +83,7 @@ class DiscordNotifier:
         lines.append("")
         
         if bearish:
-            lines.append("**🔴 BEARISH Markets:**")
+            lines.append("**🔴 BEARISH Markets (Majors):**")
             for market in bearish[:3]:
                 symbol = market['symbol']
                 score = market['final_score']
@@ -89,7 +93,7 @@ class DiscordNotifier:
         actionable = ranked.get('top_actionable', [])
         if actionable:
             lines.append("")
-            lines.append(f"**⚡ Actionable Setups (|score| >= 1.0): {len(actionable)}**")
+            lines.append(f"**⚡ Actionable Majors (|score| >= 1.0): {len(actionable)}**")
             for market in actionable:
                 symbol = market['symbol']
                 bias = "🟢 LONG" if market['final_bias'] == 'bullish' else "🔴 SHORT"
@@ -98,12 +102,32 @@ class DiscordNotifier:
         
         return "\n".join(lines) if lines else "No ranked data yet"
     
+    def _build_minors_section(self, results: Dict[str, Any]) -> str:
+        """Build forex minors display section"""
+        minors = results.get('forex_minors', [])
+        
+        if not minors:
+            return "**📊 Forex Minors (Recommended):** No data yet"
+        
+        lines = ["**📊 Forex Minors (Recommended by Bernd):"]"]
+        
+        for minor in minors:
+            symbol = minor['symbol']
+            bias = minor['bias'].upper()
+            score = minor['score']
+            logic = minor.get('logic', '')
+            
+            bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
+            lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f}) | {logic}")
+        
+        return "\n".join(lines)
+    
     def _build_detailed_section(self, results: Dict[str, Any]) -> str:
         """Build detailed analysis section"""
         ranked = results.get('ranked_results', {})
         top_actionable = ranked.get('top_actionable', [])
         
-        lines = ["**📊 Top Setup Details:**"]
+        lines = ["**🔍 Top Setup Details:**"]
         
         if top_actionable:
             for market in top_actionable[:2]:
