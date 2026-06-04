@@ -122,32 +122,38 @@ class WeeklyScan:
             
             self.results['commodities'].append(result)
     
-    def _scan_fx(self):
-        """Analyze FX futures markets"""
-        logger.info("Scanning FX futures markets...")
+   def _scan_fx(self):
+    """Analyze FX futures markets"""
+    logger.info("Scanning FX futures markets...")
+    
+    fx = self.markets_config.get('fx_futures', [])
+    logger.info(f"Found {len(fx)} FX markets")
+    
+    for market in fx:
+        symbol = market['display_name']
+        logger.info(f"  → {symbol}")
         
-        fx = self.markets_config.get('fx_futures', [])
-        logger.info(f"Found {len(fx)} FX markets")
+        # Get COT data
+        cot_data = self.results['cot_data'].get(symbol, {})
         
-        for market in fx:
-            symbol = market['display_name']
-            logger.info(f"  → {symbol}")
-            
-            # Get COT data if available
-            cot_data = self.results['cot_data'].get(symbol, {})
-            
-            result = {
-                'symbol': symbol,
-                'asset_class': 'fx',
-                'bias': 'PENDING',
-                'score': 0.0,
-                'status': 'pending_fundamental_engine',
-                'cot_commercial_net': cot_data.get('commercial_net', 'N/A'),
-                'cot_retail_net': cot_data.get('nonreportable_net', 'N/A'),
-                'cot_date': cot_data.get('date', 'N/A')
-            }
-            
-            self.results['fx'].append(result)
+        # Analyze COT Net (for FX, retail positioning is more important)
+        cot_net_result = analyze_cot_net(cot_data, symbol)
+        
+        # Analyze COT Index
+        cot_index_result = analyze_cot_index(cot_data, symbol)
+        
+        # Combine results
+        result = {
+            'symbol': symbol,
+            'asset_class': 'fx',
+            'cot_net': cot_net_result,
+            'cot_index': cot_index_result,
+            'bias': cot_net_result.get('bias', 'neutral'),
+            'score': cot_net_result.get('score', 0.0),
+            'status': 'fundamental_analysis_complete'
+        }
+        
+        self.results['fx'].append(result)
     
     def _scan_indices(self):
         """Analyze index futures"""
