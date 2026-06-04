@@ -87,30 +87,38 @@ class WeeklyScan:
         
         logger.info(f"✓ Loaded COT data for {len(cot_data)} markets")
     
-    def _scan_commodities(self):
-        """Analyze commodity markets"""
-        logger.info("Scanning commodity markets...")
+  def _scan_commodities(self):
+    """Analyze commodity markets"""
+    logger.info("Scanning commodity markets...")
+    
+    commodities = self.markets_config.get('commodities', [])
+    logger.info(f"Found {len(commodities)} commodity markets")
+    
+    for market in commodities:
+        symbol = market['display_name']
+        logger.info(f"  → {symbol}")
         
-        commodities = self.markets_config.get('commodities', [])
-        logger.info(f"Found {len(commodities)} commodity markets")
+        # Get COT data
+        cot_data = self.results['cot_data'].get(symbol, {})
         
-        for market in commodities:
-            symbol = market['display_name']
-            logger.info(f"  → {symbol}")
-            
-            # Get COT data if available
-            cot_data = self.results['cot_data'].get(symbol, {})
-            
-            result = {
-                'symbol': symbol,
-                'asset_class': 'commodity',
-                'bias': 'PENDING',
-                'score': 0.0,
-                'status': 'pending_fundamental_engine',
-                'cot_commercial_net': cot_data.get('commercial_net', 'N/A'),
-                'cot_retail_net': cot_data.get('nonreportable_net', 'N/A'),
-                'cot_date': cot_data.get('date', 'N/A')
-            }
+        # Analyze COT Net
+        cot_net_result = analyze_cot_net(cot_data, symbol)
+        
+        # Analyze COT Index
+        cot_index_result = analyze_cot_index(cot_data, symbol)
+        
+        # Combine results
+        result = {
+            'symbol': symbol,
+            'asset_class': 'commodity',
+            'cot_net': cot_net_result,
+            'cot_index': cot_index_result,
+            'bias': cot_net_result.get('bias', 'neutral'),
+            'score': cot_net_result.get('score', 0.0),
+            'status': 'fundamental_analysis_complete'
+        }
+        
+        self.results['commodities'].append(result)
             
             self.results['commodities'].append(result)
     
