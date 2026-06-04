@@ -55,20 +55,38 @@ class DiscordNotifier:
         self.send_message(content)
     
     def _build_cot_section(self, results: Dict[str, Any]) -> str:
-        """Build COT data display section"""
-        commodities = results.get('commodities', [])
-        fx = results.get('fx', [])
+    """Build COT analysis display section"""
+    commodities = results.get('commodities', [])
+    fx = results.get('fx', [])
+    
+    cot_lines = ["**COT Net Analysis:**"]
+    
+    # Show commodities analysis
+    for market in commodities[:3]:  # Show first 3
+        symbol = market['symbol']
+        cot_net = market.get('cot_net', {})
+        bias = cot_net.get('bias', 'neutral').upper()
+        comm_net = cot_net.get('commercial_net', 0)
+        score = cot_net.get('score', 0.0)
         
-        cot_lines = ["**COT Positions Loaded:**"]
+        bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
+        cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f}) | Comm Net: {comm_net:,.0f}")
+    
+    cot_lines.append("")
+    
+    # Show FX analysis
+    cot_lines.append("**FX Futures COT:**")
+    for market in fx[:2]:  # Show first 2
+        symbol = market['symbol']
+        cot_net = market.get('cot_net', {})
+        bias = cot_net.get('bias', 'neutral').upper()
+        comm_net = cot_net.get('commercial_net', 0)
+        score = cot_net.get('score', 0.0)
         
-        # Show commodities with COT
-        for market in commodities[:3]:  # Show first 3
-            symbol = market['symbol']
-            comm_net = market.get('cot_commercial_net', 'N/A')
-            retail_net = market.get('cot_retail_net', 'N/A')
-            
-            if comm_net != 'N/A':
-                cot_lines.append(f"• {symbol} | Comm: {comm_net:,.0f} | Retail: {retail_net:,.0f}")
+        bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
+        cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f}) | Comm Net: {comm_net:,.0f}")
+    
+    return "\n".join(cot_lines)
         
         # Show FX with COT
         for market in fx[:2]:  # Show first 2
