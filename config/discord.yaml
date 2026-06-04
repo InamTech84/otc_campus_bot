@@ -1,0 +1,27 @@
+# Discord Configuration
+
+discord:
+  # You will fill this in after creating Discord webhook
+  webhook_url: "YOUR_DISCORD_WEBHOOK_URL_HERE"
+  
+  # Message settings
+  send_summary: true
+  send_per_market: true
+  max_markets_per_message: 3
+  
+  # Embed colors
+  colors:
+    strong_bullish: 3066993    # green
+    bullish: 65280             # light green
+    neutral: 9807270           # gray
+    bearish: 16711680          # light red
+    strong_bearish: 13632025   # dark red
+
+# Message formatting
+messages:
+  summary_title: "🎓 OTC Campus Weekly Scanner"
+  timestamp_format: "%Y-%m-%d %H:%M:%S UTC"
+  
+report:
+  include_chart_images: false  # Phase 4 feature
+  include_email: false         # Phase 4 feature
