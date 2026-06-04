@@ -6,6 +6,7 @@ Coordinates all analysis engines
 import logging
 from datetime import datetime
 from typing import Dict, Any, List
+from data.cot_loader import COTLoader
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ class WeeklyScan:
         self.markets_config = markets_config
         self.discord_config = discord_config
         self.results = {}
+        self.cot_loader = COTLoader()
+        logger.info("✓ COT Loader initialized")
     
     def run(self) -> Dict[str, Any]:
         """Run complete weekly scan"""
@@ -24,19 +27,22 @@ class WeeklyScan:
         logger.info("Phase 1: Initializing scan...")
         self._init_scan()
         
-        logger.info("Phase 2: Scanning commodities...")
+        logger.info("Phase 2: Loading COT data...")
+        self._load_cot_data()
+        
+        logger.info("Phase 3: Scanning commodities...")
         self._scan_commodities()
         
-        logger.info("Phase 3: Scanning FX futures...")
+        logger.info("Phase 4: Scanning FX futures...")
         self._scan_fx()
         
-        logger.info("Phase 4: Scanning indices...")
+        logger.info("Phase 5: Scanning indices...")
         self._scan_indices()
         
-        logger.info("Phase 5: Scanning stocks...")
+        logger.info("Phase 6: Scanning stocks...")
         self._scan_stocks()
         
-        logger.info("Phase 6: Running technical analysis...")
+        logger.info("Phase 7: Running technical analysis...")
         self._run_technical()
         
         return self.results
@@ -49,6 +55,7 @@ class WeeklyScan:
             'fx': [],
             'indices': [],
             'stocks': [],
+            'cot_data': {},
             'summary': {
                 'total_markets': 0,
                 'strong_bullish': 0,
@@ -60,6 +67,24 @@ class WeeklyScan:
         }
         logger.info("✓ Scan initialized")
     
+    def _load_cot_data(self):
+        """Load COT data for all markets"""
+        logger.info("Loading COT data from CFTC...")
+        
+        # Get all symbols that have CFTC codes
+        all_markets = []
+        all_markets.extend(self.markets_config.get('commodities', []))
+        all_markets.extend(self.markets_config.get('fx_futures', []))
+        all_markets.extend(self.markets_config.get('indices', []))
+        
+        symbols = [market['display_name'] for market in all_markets]
+        
+        # Load COT data for each symbol
+        cot_data = self.cot_loader.load_all_markets(symbols)
+        self.results['cot_data'] = cot_data
+        
+        logger.info(f"✓ Loaded COT data for {len(cot_data)} markets")
+    
     def _scan_commodities(self):
         """Analyze commodity markets"""
         logger.info("Scanning commodity markets...")
@@ -68,14 +93,24 @@ class WeeklyScan:
         logger.info(f"Found {len(commodities)} commodity markets")
         
         for market in commodities:
-            logger.info(f"  → {market['display_name']}")
-            # Placeholder analysis
-            self.results['commodities'].append({
-                'symbol': market['display_name'],
-                'bias': 'PLACEHOLDER',
+            symbol = market['display_name']
+            logger.info(f"  → {symbol}")
+            
+            # Get COT data if available
+            cot_data = self.results['cot_data'].get(symbol, {})
+            
+            result = {
+                'symbol': symbol,
+                'asset_class': 'commodity',
+                'bias': 'PENDING',
                 'score': 0.0,
-                'status': 'pending_engine'
-            })
+                'status': 'pending_fundamental_engine',
+                'cot_commercial_net': cot_data.get('commercial_net', 'N/A'),
+                'cot_retail_net': cot_data.get('nonreportable_net', 'N/A'),
+                'cot_date': cot_data.get('date', 'N/A')
+            }
+            
+            self.results['commodities'].append(result)
     
     def _scan_fx(self):
         """Analyze FX futures markets"""
@@ -85,13 +120,24 @@ class WeeklyScan:
         logger.info(f"Found {len(fx)} FX markets")
         
         for market in fx:
-            logger.info(f"  → {market['display_name']}")
-            self.results['fx'].append({
-                'symbol': market['display_name'],
-                'bias': 'PLACEHOLDER',
+            symbol = market['display_name']
+            logger.info(f"  → {symbol}")
+            
+            # Get COT data if available
+            cot_data = self.results['cot_data'].get(symbol, {})
+            
+            result = {
+                'symbol': symbol,
+                'asset_class': 'fx',
+                'bias': 'PENDING',
                 'score': 0.0,
-                'status': 'pending_engine'
-            })
+                'status': 'pending_fundamental_engine',
+                'cot_commercial_net': cot_data.get('commercial_net', 'N/A'),
+                'cot_retail_net': cot_data.get('nonreportable_net', 'N/A'),
+                'cot_date': cot_data.get('date', 'N/A')
+            }
+            
+            self.results['fx'].append(result)
     
     def _scan_indices(self):
         """Analyze index futures"""
@@ -101,13 +147,20 @@ class WeeklyScan:
         logger.info(f"Found {len(indices)} index markets")
         
         for market in indices:
-            logger.info(f"  → {market['display_name']}")
-            self.results['indices'].append({
-                'symbol': market['display_name'],
-                'bias': 'PLACEHOLDER',
+            symbol = market['display_name']
+            logger.info(f"  → {symbol}")
+            
+            # Indices don't have COT data in same way, skip for now
+            result = {
+                'symbol': symbol,
+                'asset_class': 'index',
+                'bias': 'PENDING',
                 'score': 0.0,
-                'status': 'pending_engine'
-            })
+                'status': 'pending_valuation_engine',
+                'note': 'Using valuation + seasonality'
+            }
+            
+            self.results['indices'].append(result)
     
     def _scan_stocks(self):
         """Analyze stock markets"""
@@ -117,16 +170,23 @@ class WeeklyScan:
         logger.info(f"Found {len(stocks)} stock markets")
         
         for market in stocks:
-            logger.info(f"  → {market['display_name']}")
-            self.results['stocks'].append({
-                'symbol': market['display_name'],
-                'bias': 'PLACEHOLDER',
+            symbol = market['display_name']
+            logger.info(f"  → {symbol}")
+            
+            # Stocks don't have COT data
+            result = {
+                'symbol': symbol,
+                'asset_class': 'stock',
+                'bias': 'PENDING',
                 'score': 0.0,
-                'status': 'pending_engine'
-            })
+                'status': 'pending_valuation_engine',
+                'note': 'Using valuation + seasonality'
+            }
+            
+            self.results['stocks'].append(result)
     
     def _run_technical(self):
         """Run technical zone analysis"""
         logger.info("Technical analysis placeholder...")
-        # This will use zones.py in Phase 3
+        # Phase 3 feature
         pass
