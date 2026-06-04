@@ -87,73 +87,71 @@ class WeeklyScan:
         
         logger.info(f"✓ Loaded COT data for {len(cot_data)} markets")
     
-  def _scan_commodities(self):
-    """Analyze commodity markets"""
-    logger.info("Scanning commodity markets...")
-    
-    commodities = self.markets_config.get('commodities', [])
-    logger.info(f"Found {len(commodities)} commodity markets")
-    
-    for market in commodities:
-        symbol = market['display_name']
-        logger.info(f"  → {symbol}")
+    def _scan_commodities(self):
+        """Analyze commodity markets"""
+        logger.info("Scanning commodity markets...")
         
-        # Get COT data
-        cot_data = self.results['cot_data'].get(symbol, {})
+        commodities = self.markets_config.get('commodities', [])
+        logger.info(f"Found {len(commodities)} commodity markets")
         
-        # Analyze COT Net
-        cot_net_result = analyze_cot_net(cot_data, symbol)
-        
-        # Analyze COT Index
-        cot_index_result = analyze_cot_index(cot_data, symbol)
-        
-        # Combine results
-        result = {
-            'symbol': symbol,
-            'asset_class': 'commodity',
-            'cot_net': cot_net_result,
-            'cot_index': cot_index_result,
-            'bias': cot_net_result.get('bias', 'neutral'),
-            'score': cot_net_result.get('score', 0.0),
-            'status': 'fundamental_analysis_complete'
-        }
-        
-        self.results['commodities'].append(result)
+        for market in commodities:
+            symbol = market['display_name']
+            logger.info(f"  → {symbol}")
+            
+            # Get COT data
+            cot_data = self.results['cot_data'].get(symbol, {})
+            
+            # Analyze COT Net
+            cot_net_result = analyze_cot_net(cot_data, symbol)
+            
+            # Analyze COT Index
+            cot_index_result = analyze_cot_index(cot_data, symbol)
+            
+            # Combine results
+            result = {
+                'symbol': symbol,
+                'asset_class': 'commodity',
+                'cot_net': cot_net_result,
+                'cot_index': cot_index_result,
+                'bias': cot_net_result.get('bias', 'neutral'),
+                'score': cot_net_result.get('score', 0.0),
+                'status': 'fundamental_analysis_complete'
+            }
             
             self.results['commodities'].append(result)
     
-   def _scan_fx(self):
-    """Analyze FX futures markets"""
-    logger.info("Scanning FX futures markets...")
-    
-    fx = self.markets_config.get('fx_futures', [])
-    logger.info(f"Found {len(fx)} FX markets")
-    
-    for market in fx:
-        symbol = market['display_name']
-        logger.info(f"  → {symbol}")
+    def _scan_fx(self):
+        """Analyze FX futures markets"""
+        logger.info("Scanning FX futures markets...")
         
-        # Get COT data
-        cot_data = self.results['cot_data'].get(symbol, {})
+        fx = self.markets_config.get('fx_futures', [])
+        logger.info(f"Found {len(fx)} FX markets")
         
-        # Analyze COT Net (for FX, retail positioning is more important)
-        cot_net_result = analyze_cot_net(cot_data, symbol)
-        
-        # Analyze COT Index
-        cot_index_result = analyze_cot_index(cot_data, symbol)
-        
-        # Combine results
-        result = {
-            'symbol': symbol,
-            'asset_class': 'fx',
-            'cot_net': cot_net_result,
-            'cot_index': cot_index_result,
-            'bias': cot_net_result.get('bias', 'neutral'),
-            'score': cot_net_result.get('score', 0.0),
-            'status': 'fundamental_analysis_complete'
-        }
-        
-        self.results['fx'].append(result)
+        for market in fx:
+            symbol = market['display_name']
+            logger.info(f"  → {symbol}")
+            
+            # Get COT data
+            cot_data = self.results['cot_data'].get(symbol, {})
+            
+            # Analyze COT Net (for FX, retail positioning is more important)
+            cot_net_result = analyze_cot_net(cot_data, symbol)
+            
+            # Analyze COT Index
+            cot_index_result = analyze_cot_index(cot_data, symbol)
+            
+            # Combine results
+            result = {
+                'symbol': symbol,
+                'asset_class': 'fx',
+                'cot_net': cot_net_result,
+                'cot_index': cot_index_result,
+                'bias': cot_net_result.get('bias', 'neutral'),
+                'score': cot_net_result.get('score', 0.0),
+                'status': 'fundamental_analysis_complete'
+            }
+            
+            self.results['fx'].append(result)
     
     def _scan_indices(self):
         """Analyze index futures"""
