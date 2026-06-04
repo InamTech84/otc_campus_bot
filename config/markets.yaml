@@ -1,4 +1,4 @@
-# OTC Campus Bot — Version 1 Markets
+# OTC Campus Bot — Version 1 Markets (Updated with Forex Minors)
 
 commodities:
   - symbol: CL=F
@@ -69,6 +69,43 @@ fx_futures:
     cftc_code: "098662"
     description: "US Dollar Index"
 
+forex_minors:
+  - symbol: EURJPY
+    display_name: "EURJPY"
+    asset_class: "forex_minor"
+    components: ["6E1!", "6J1!"]
+    description: "Euro/Japanese Yen (Recommended Minor)"
+  - symbol: EURGBP
+    display_name: "EURGBP"
+    asset_class: "forex_minor"
+    components: ["6E1!", "6B1!"]
+    description: "Euro/Pound (Recommended Minor)"
+  - symbol: AUDCAD
+    display_name: "AUDCAD"
+    asset_class: "forex_minor"
+    components: ["6A1!", "6C1!"]
+    description: "Australian Dollar/Canadian Dollar (Recommended Minor)"
+  - symbol: EURAUD
+    display_name: "EURAUD"
+    asset_class: "forex_minor"
+    components: ["6E1!", "6A1!"]
+    description: "Euro/Australian Dollar (Recommended Minor)"
+  - symbol: GBPJPY
+    display_name: "GBPJPY"
+    asset_class: "forex_minor"
+    components: ["6B1!", "6J1!"]
+    description: "Pound/Japanese Yen (Recommended Minor)"
+  - symbol: GBPCHF
+    display_name: "GBPCHF"
+    asset_class: "forex_minor"
+    components: ["6B1!", "6S1!"]
+    description: "Pound/Swiss Franc (Recommended Minor)"
+  - symbol: AUDJPY
+    display_name: "AUDJPY"
+    asset_class: "forex_minor"
+    components: ["6A1!", "6J1!"]
+    description: "Australian Dollar/Japanese Yen (Recommended Minor)"
+
 indices:
   - symbol: ES=F
     display_name: "ES1!"
@@ -113,28 +150,29 @@ stocks:
 timeframes:
   commodities: ["1d", "1w"]
   fx: ["1d", "1w"]
+  forex_minors: ["1d", "1w"]
   indices: ["1d", "1w"]
   stocks: ["1d", "1w"]
 
 # Score weights by asset class
 weights:
   commodities:
-    trend: 0.15
     cot_net: 0.25
-    cot_index: 0.25
-    valuation: 0.15
+    cot_index: 0.30
+    valuation: 0.25
     seasonality: 0.10
-    retail: 0.05
-    technical: 0.05
 
   fx:
-    retail: 0.25
-    commercials: 0.15
-    cot_net: 0.15
-    fund_manager: 0.15
-    valuation: 0.15
+    cot_net: 0.25
+    cot_index: 0.30
+    valuation: 0.25
     seasonality: 0.10
-    trend: 0.05
+
+  forex_minors:
+    cot_net: 0.30
+    cot_index: 0.30
+    valuation: 0.20
+    seasonality: 0.10
 
   equities:
     valuation_13w: 0.30
@@ -148,5 +186,5 @@ weights:
 thresholds:
   valuation_undervalued: -75
   valuation_overvalued: 75
-  valuation_near: 15  # range around threshold to mention
+  valuation_near: 15
   seasonality_lookback_years: 10
