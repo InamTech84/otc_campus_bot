@@ -1,14 +1,8 @@
-# Discord Configuration
-
 discord:
-webhook_url: "https://discord.com/api/webhooks/1511944260671242250/8qiWZzDYVtQ8FQ5wt0ROke2_ZS6ZhB2DxFHtWZb5Zx04yH37k2gyzBCNzSMm5Vqs5WLq"
-  
-  # Message settings
+  webhook_url: "https://discord.com/api/webhooks/1511944260671242250/8qiWZzDYVtQ8FQ5wt0ROke2_ZS6ZhB2DxFHtWZb5Zx04yH37k2gyzBCNzSMm5Vqs5WLq"
   send_summary: true
   send_per_market: true
   max_markets_per_message: 3
-  
-  # Embed colors
   colors:
     strong_bullish: 3066993
     bullish: 65280
@@ -16,11 +10,10 @@ webhook_url: "https://discord.com/api/webhooks/1511944260671242250/8qiWZzDYVtQ8F
     bearish: 16711680
     strong_bearish: 13632025
 
-# Message formatting
 messages:
-  summary_title: "🎓 OTC Campus Weekly Scanner"
+  summary_title: "OTC Campus Weekly Scanner"
   timestamp_format: "%Y-%m-%d %H:%M:%S UTC"
-  
+
 report:
   include_chart_images: false
   include_email: false
