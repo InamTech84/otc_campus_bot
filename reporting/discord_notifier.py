@@ -1,7 +1,7 @@
 import logging
 import requests
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,10 @@ class DiscordNotifier:
     def send_summary_report(self, results: Dict[str, Any]):
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
         
-        # Build COT section
+        # Build sections
         cot_section = self._build_cot_section(results)
+        valuation_section = self._build_valuation_section(results)
+        seasonality_section = self._build_seasonality_section(results)
         
         content = f"""🎓 **OTC Campus Weekly Scanner Report**
 📅 {timestamp}
@@ -48,9 +50,13 @@ class DiscordNotifier:
 
 {cot_section}
 
-**Status:** ✅ Phase 2B: COT Analysis Engine loaded.
+{valuation_section}
 
-*Valuation & Seasonality coming next...*"""
+{seasonality_section}
+
+**Status:** ✅ Phase 3: Valuation & Seasonality loaded.
+
+*Phase 4 (Market Ranking & Technical) coming next...*"""
         
         self.send_message(content)
     
@@ -61,35 +67,66 @@ class DiscordNotifier:
         
         cot_lines = ["**COT Net Analysis:**"]
         
-        # Show commodities analysis
+        # Show commodities
         for market in commodities[:3]:
             symbol = market['symbol']
             cot_net = market.get('cot_net', {})
             bias = cot_net.get('bias', 'neutral').upper()
-            comm_net = cot_net.get('commercial_net', 0)
             score = cot_net.get('score', 0.0)
             
             bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
-            cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f}) | Comm Net: {comm_net:,.0f}")
+            cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f})")
         
         cot_lines.append("")
-        cot_lines.append("**FX Futures COT:**")
         
-        # Show FX analysis
+        # Show FX
         for market in fx[:2]:
             symbol = market['symbol']
             cot_net = market.get('cot_net', {})
             bias = cot_net.get('bias', 'neutral').upper()
-            comm_net = cot_net.get('commercial_net', 0)
             score = cot_net.get('score', 0.0)
             
             bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
-            cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f}) | Comm Net: {comm_net:,.0f}")
+            cot_lines.append(f"{bias_emoji} {symbol} | {bias} (Score: {score:+.2f})")
         
         return "\n".join(cot_lines)
     
+    def _build_valuation_section(self, results: Dict[str, Any]) -> str:
+        """Build valuation display section"""
+        commodities = results.get('commodities', [])
+        
+        val_lines = ["**Valuation Analysis:**"]
+        
+        for market in commodities[:3]:
+            symbol = market['symbol']
+            valuation = market.get('valuation', {})
+            state = valuation.get('valuation_state', 'neutral')
+            dev = valuation.get('deviation_pct', 0.0)
+            
+            state_emoji = "🟢" if 'under' in state else "🔴" if 'over' in state else "⚪"
+            val_lines.append(f"{state_emoji} {symbol} | {state} (Dev: {dev:+.1f}%)")
+        
+        return "\n".join(val_lines)
+    
+    def _build_seasonality_section(self, results: Dict[str, Any]) -> str:
+        """Build seasonality display section"""
+        indices = results.get('indices', [])
+        
+        seas_lines = ["**Seasonality (Equities):**"]
+        
+        for market in indices[:2]:
+            symbol = market['symbol']
+            seasonality = market.get('seasonality', {})
+            election = seasonality.get('election_cycle', 'N/A')
+            bias = seasonality.get('seasonality_bias', 'neutral').upper()
+            
+            bias_emoji = "🟢" if bias == "BULLISH" else "🔴" if bias == "BEARISH" else "⚪"
+            seas_lines.append(f"{bias_emoji} {symbol} | {election} | {bias}")
+        
+        return "\n".join(seas_lines)
+    
     def send_market_details(self, results: Dict[str, Any]):
-        content = "📊 **Detailed Market Analysis**\n\nDetailed analysis coming in Phase 3..."
+        content = "📊 **Detailed Market Analysis**\n\nDetailed analysis coming in Phase 4..."
         self.send_message(content)
     
     def send_error_report(self, error_msg: str):
