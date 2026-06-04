@@ -7,6 +7,8 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, List
 from data.cot_loader import COTLoader
+from fundamentals.cot_net import analyze_cot_net
+from fundamentals.cot_index import analyze_cot_index
 
 logger = logging.getLogger(__name__)
 
