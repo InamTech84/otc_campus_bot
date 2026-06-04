@@ -1,8 +1,7 @@
 # Discord Configuration
 
 discord:
-  # You will fill this in after creating Discord webhook
-  webhook_url: "YOUR_DISCORD_WEBHOOK_URL_HERE"
+  webhook_url: "https://discord.com/api/webhooks/1511944260671242250/8qiWZzDYVtQ8FQ5wt0ROke2_ZS6ZhB2DxFHtWZb5Zx04yH37k2gyzBCNzSMm5Vqs5WLq"
   
   # Message settings
   send_summary: true
@@ -11,11 +10,11 @@ discord:
   
   # Embed colors
   colors:
-    strong_bullish: 3066993    # green
-    bullish: 65280             # light green
-    neutral: 9807270           # gray
-    bearish: 16711680          # light red
-    strong_bearish: 13632025   # dark red
+    strong_bullish: 3066993
+    bullish: 65280
+    neutral: 9807270
+    bearish: 16711680
+    strong_bearish: 13632025
 
 # Message formatting
 messages:
@@ -23,5 +22,5 @@ messages:
   timestamp_format: "%Y-%m-%d %H:%M:%S UTC"
   
 report:
-  include_chart_images: false  # Phase 4 feature
-  include_email: false         # Phase 4 feature
+  include_chart_images: false
+  include_email: false
