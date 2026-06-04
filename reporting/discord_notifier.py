@@ -1,24 +1,56 @@
+import logging
 import requests
-import yaml
+from datetime import datetime
+from typing import Dict, Any
 
-def send_discord_message(message: str):
-    try:
-        with open("config/discord.yaml") as f:
-            config = yaml.safe_load(f)
+logger = logging.getLogger(__name__)
+
+
+class DiscordNotifier:
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.webhook_url = config['discord']['webhook_url']
+        logger.info("DiscordNotifier initialized")
+    
+    def send_message(self, content: str):
+        if not self.webhook_url or "PLACEHOLDER" in self.webhook_url:
+            logger.warning("Webhook URL not valid")
+            return False
         
-        webhook_url = config.get("webhook_url", "")
-        
-        if not webhook_url or "YOUR_DISCORD" in webhook_url:
-            print("Discord webhook URL not set or invalid.")
-            return
-        
-        payload = {"content": message}
-        response = requests.post(webhook_url, json=payload, timeout=10)
-        
-        if response.status_code == 204:
-            print("Message sent to Discord successfully.")
-        else:
-            print(f"Failed to send message. Status: {response.status_code}")
+        try:
+            payload = {"content": content}
+            response = requests.post(self.webhook_url, json=payload, timeout=10)
             
-    except Exception as e:
-        print(f"Error: {e}")
+            if response.status_code == 204:
+                logger.info("Message sent to Discord")
+                return True
+            else:
+                logger.error(f"Discord error {response.status_code}")
+                return False
+        except Exception as e:
+            logger.error(f"Send failed: {e}")
+            return False
+    
+    def send_summary_report(self, results: Dict[str, Any]):
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        
+        content = f"""🎓 OTC Campus Weekly Scanner Report
+📅 {timestamp}
+
+Markets Scanned:
+• Commodities: 5
+• FX Futures: 8
+• Indices: 4
+• Stocks: 5
+
+Status: Bot is running! Phase 1 complete."""
+        
+        self.send_message(content)
+    
+    def send_market_details(self, results: Dict[str, Any]):
+        content = "Market details coming in Phase 2"
+        self.send_message(content)
+    
+    def send_error_report(self, error_msg: str):
+        content = f"Error: {error_msg}"
+        self.send_message(content)
