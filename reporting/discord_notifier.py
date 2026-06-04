@@ -109,7 +109,7 @@ class DiscordNotifier:
         if not minors:
             return "**📊 Forex Minors (Recommended):** No data yet"
         
-        lines = ["**📊 Forex Minors (Recommended by Bernd):"]"]
+lines = ["**📊 Forex Minors (Recommended by Bernd):**"]
         
         for minor in minors:
             symbol = minor['symbol']
