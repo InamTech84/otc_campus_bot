@@ -34,9 +34,9 @@ class DiscordNotifier:
     def send_summary_report(self, results: Dict[str, Any]):
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
         
-        # Build sections
         ranking_section = self._build_ranking_section(results)
         detailed_section = self._build_detailed_section(results)
+        technical_section = self._build_technical_section(results)
         
         content = f"""🎓 **OTC Campus Weekly Scanner Report**
 📅 {timestamp}
@@ -51,9 +51,11 @@ class DiscordNotifier:
 
 {detailed_section}
 
-**Status:** ✅ Phase 4: Market Ranking loaded.
+{technical_section}
 
-*Phase 5 (Technical S/D Zones) coming next...*"""
+**Status:** ✅ Phase 5: Technical Zones (Placeholder).
+
+*Full S/D zone detection coming in next iteration...*"""
         
         self.send_message(content)
     
@@ -66,7 +68,6 @@ class DiscordNotifier:
         
         lines = []
         
-        # Bullish markets
         if bullish:
             lines.append("**🟢 BULLISH Markets:**")
             for market in bullish[:3]:
@@ -77,7 +78,6 @@ class DiscordNotifier:
         
         lines.append("")
         
-        # Bearish markets
         if bearish:
             lines.append("**🔴 BEARISH Markets:**")
             for market in bearish[:3]:
@@ -86,7 +86,6 @@ class DiscordNotifier:
                 conviction = market['conviction']
                 lines.append(f"  {symbol} | Score: {score:+.2f} ({conviction})")
         
-        # Actionable
         actionable = ranked.get('top_actionable', [])
         if actionable:
             lines.append("")
@@ -119,12 +118,32 @@ class DiscordNotifier:
                 lines.append(f"  Valuation: {breakdown.get('valuation', 0):+.2f}")
                 lines.append(f"  Seasonality: {breakdown.get('seasonality', 0):+.2f}")
         else:
-            lines.append("No actionable setups with score >= 1.0")
+            lines.append("No actionable setups with score >= 1.0 yet")
+        
+        return "\n".join(lines)
+    
+    def _build_technical_section(self, results: Dict[str, Any]) -> str:
+        """Build technical zones section"""
+        tech = results.get('technical_zones', {})
+        
+        if tech.get('status') == 'PLACEHOLDER':
+            return "**🎯 Technical S/D Zones:** Awaiting price data integration"
+        
+        zones = tech.get('zones', [])
+        if not zones:
+            return "**🎯 Technical S/D Zones:** No HQ zones detected yet"
+        
+        lines = ["**🎯 Technical S/D Zones:**"]
+        for zone in zones[:5]:
+            z = zone['ltf_zone']
+            direction = zone['direction']
+            emoji = "🟢" if direction == "LONG" else "🔴"
+            lines.append(f"{emoji} {z['timeframe']} | {z['top']:.5f} - {z['bot']:.5f} | Q: {zone['nesting_quality']:.2f}")
         
         return "\n".join(lines)
     
     def send_market_details(self, results: Dict[str, Any]):
-        content = "📊 **Detailed Market Analysis**\n\nDetailed analysis in summary report above."
+        content = "📊 **Detailed Analysis**\n\nSee summary report above."
         self.send_message(content)
     
     def send_error_report(self, error_msg: str):
