@@ -1,6 +1,6 @@
 """
 Weekly Scan Orchestrator
-Coordinates all analysis engines + technical zones
+Coordinates all analysis engines + forex minors
 """
 
 import logging
@@ -11,6 +11,7 @@ from fundamentals.cot_net import analyze_cot_net
 from fundamentals.cot_index import analyze_cot_index
 from fundamentals.valuation import analyze_valuation
 from fundamentals.seasonality import analyze_seasonality
+from fundamentals.forex_minors import analyze_forex_minor
 from fundamentals.market_ranking import rank_all_markets
 
 logger = logging.getLogger(__name__)
@@ -41,16 +42,19 @@ class WeeklyScan:
         logger.info("Phase 4: Scanning FX futures...")
         self._scan_fx()
         
-        logger.info("Phase 5: Scanning indices...")
+        logger.info("Phase 5: Scanning forex minors...")
+        self._scan_forex_minors()
+        
+        logger.info("Phase 6: Scanning indices...")
         self._scan_indices()
         
-        logger.info("Phase 6: Scanning stocks...")
+        logger.info("Phase 7: Scanning stocks...")
         self._scan_stocks()
         
-        logger.info("Phase 7: Ranking markets...")
+        logger.info("Phase 8: Ranking markets...")
         self._rank_markets()
         
-        logger.info("Phase 8: Detecting technical zones...")
+        logger.info("Phase 9: Detecting technical zones...")
         self._detect_technical_zones()
         
         return self.results
@@ -61,6 +65,7 @@ class WeeklyScan:
             'timestamp': datetime.utcnow().isoformat(),
             'commodities': [],
             'fx': [],
+            'forex_minors': [],
             'indices': [],
             'stocks': [],
             'cot_data': {},
@@ -153,6 +158,35 @@ class WeeklyScan:
             
             self.results['fx'].append(result)
     
+    def _scan_forex_minors(self):
+        """Analyze forex minor pairs using component futures"""
+        logger.info("Scanning forex minor pairs...")
+        
+        minors = self.markets_config.get('forex_minors', [])
+        logger.info(f"Found {len(minors)} forex minor pairs")
+        
+        # Need ranked FX results first
+        ranked_fx = self.results.get('ranked_results', {}).get('all_markets', [])
+        
+        for market in minors:
+            symbol = market['display_name']
+            logger.info(f"  → {symbol}")
+            
+            # Analyze using component futures
+            minor_result = analyze_forex_minor(symbol, {'all_markets': ranked_fx})
+            
+            result = {
+                'symbol': symbol,
+                'asset_class': 'forex_minor',
+                'components': minor_result.get('components', {}),
+                'logic': minor_result.get('logic', ''),
+                'bias': minor_result.get('bias', 'neutral'),
+                'score': minor_result.get('score', 0.0),
+                'status': 'fundamental_analysis_complete'
+            }
+            
+            self.results['forex_minors'].append(result)
+    
     def _scan_indices(self):
         """Analyze index futures"""
         logger.info("Scanning index futures...")
@@ -226,7 +260,6 @@ class WeeklyScan:
     def _detect_technical_zones(self):
         """Detect technical S/D zones (placeholder for Phase 5)"""
         logger.info("Technical zone detection - PLACEHOLDER")
-        logger.info("Ready for zone detection when price data is available")
         
         self.results['technical_zones'] = {
             'status': 'PLACEHOLDER',
