@@ -9,6 +9,8 @@ from typing import Dict, Any, List
 from data.cot_loader import COTLoader
 from fundamentals.cot_net import analyze_cot_net
 from fundamentals.cot_index import analyze_cot_index
+from fundamentals.valuation import analyze_valuation
+from fundamentals.seasonality import analyze_seasonality
 
 logger = logging.getLogger(__name__)
 
@@ -107,12 +109,20 @@ class WeeklyScan:
             # Analyze COT Index
             cot_index_result = analyze_cot_index(cot_data, symbol)
             
+            # Analyze Valuation
+            valuation_result = analyze_valuation(symbol, 'commodity')
+            
+            # Analyze Seasonality
+            seasonality_result = analyze_seasonality(symbol, 'commodity')
+            
             # Combine results
             result = {
                 'symbol': symbol,
                 'asset_class': 'commodity',
                 'cot_net': cot_net_result,
                 'cot_index': cot_index_result,
+                'valuation': valuation_result,
+                'seasonality': seasonality_result,
                 'bias': cot_net_result.get('bias', 'neutral'),
                 'score': cot_net_result.get('score', 0.0),
                 'status': 'fundamental_analysis_complete'
@@ -134,18 +144,26 @@ class WeeklyScan:
             # Get COT data
             cot_data = self.results['cot_data'].get(symbol, {})
             
-            # Analyze COT Net (for FX, retail positioning is more important)
+            # Analyze COT Net
             cot_net_result = analyze_cot_net(cot_data, symbol)
             
             # Analyze COT Index
             cot_index_result = analyze_cot_index(cot_data, symbol)
             
+            # Analyze Valuation (vs DXY)
+            valuation_result = analyze_valuation(symbol, 'forex')
+            
+            # Analyze Seasonality
+            seasonality_result = analyze_seasonality(symbol, 'forex')
+            
             # Combine results
             result = {
                 'symbol': symbol,
-                'asset_class': 'fx',
+                'asset_class': 'forex',
                 'cot_net': cot_net_result,
                 'cot_index': cot_index_result,
+                'valuation': valuation_result,
+                'seasonality': seasonality_result,
                 'bias': cot_net_result.get('bias', 'neutral'),
                 'score': cot_net_result.get('score', 0.0),
                 'status': 'fundamental_analysis_complete'
@@ -164,14 +182,20 @@ class WeeklyScan:
             symbol = market['display_name']
             logger.info(f"  → {symbol}")
             
-            # Indices don't have COT data in same way, skip for now
+            # Analyze Valuation (vs ZB1!)
+            valuation_result = analyze_valuation(symbol, 'index')
+            
+            # Analyze Seasonality (election cycle + decennial)
+            seasonality_result = analyze_seasonality(symbol, 'index')
+            
             result = {
                 'symbol': symbol,
                 'asset_class': 'index',
-                'bias': 'PENDING',
-                'score': 0.0,
-                'status': 'pending_valuation_engine',
-                'note': 'Using valuation + seasonality'
+                'valuation': valuation_result,
+                'seasonality': seasonality_result,
+                'bias': seasonality_result.get('seasonality_bias', 'neutral'),
+                'score': seasonality_result.get('score', 0.0),
+                'status': 'fundamental_analysis_complete'
             }
             
             self.results['indices'].append(result)
@@ -187,14 +211,20 @@ class WeeklyScan:
             symbol = market['display_name']
             logger.info(f"  → {symbol}")
             
-            # Stocks don't have COT data
+            # Analyze Valuation (vs ZB1!)
+            valuation_result = analyze_valuation(symbol, 'stock')
+            
+            # Analyze Seasonality (election cycle + decennial)
+            seasonality_result = analyze_seasonality(symbol, 'stock')
+            
             result = {
                 'symbol': symbol,
                 'asset_class': 'stock',
-                'bias': 'PENDING',
-                'score': 0.0,
-                'status': 'pending_valuation_engine',
-                'note': 'Using valuation + seasonality'
+                'valuation': valuation_result,
+                'seasonality': seasonality_result,
+                'bias': seasonality_result.get('seasonality_bias', 'neutral'),
+                'score': seasonality_result.get('score', 0.0),
+                'status': 'fundamental_analysis_complete'
             }
             
             self.results['stocks'].append(result)
@@ -202,5 +232,5 @@ class WeeklyScan:
     def _run_technical(self):
         """Run technical zone analysis"""
         logger.info("Technical analysis placeholder...")
-        # Phase 3 feature
+        # Phase 4 feature
         pass
