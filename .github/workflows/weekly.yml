@@ -1,0 +1,32 @@
+name: OTC Campus Weekly Scan
+
+on:
+  schedule:
+    # Sunday 22:00 UTC (6 PM EST)
+    - cron: "0 22 * * 0"
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run OTC Campus Scan
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python main.py
+      
+      - name: Log completion
+        run: echo "Weekly scan completed at $(date)"
