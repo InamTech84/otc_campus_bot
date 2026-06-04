@@ -11,6 +11,7 @@ from fundamentals.cot_net import analyze_cot_net
 from fundamentals.cot_index import analyze_cot_index
 from fundamentals.valuation import analyze_valuation
 from fundamentals.seasonality import analyze_seasonality
+from fundamentals.market_ranking import rank_all_markets
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,10 @@ class WeeklyScan:
         logger.info("Phase 6: Scanning stocks...")
         self._scan_stocks()
         
-        logger.info("Phase 7: Running technical analysis...")
+        logger.info("Phase 7: Ranking markets...")
+        self._rank_markets()
+        
+        logger.info("Phase 8: Running technical analysis...")
         self._run_technical()
         
         return self.results
@@ -60,6 +64,7 @@ class WeeklyScan:
             'indices': [],
             'stocks': [],
             'cot_data': {},
+            'ranked_results': {},
             'summary': {
                 'total_markets': 0,
                 'strong_bullish': 0,
@@ -229,8 +234,29 @@ class WeeklyScan:
             
             self.results['stocks'].append(result)
     
+    def _rank_markets(self):
+        """Rank all markets by fundamental bias"""
+        logger.info("Ranking markets by fundamental bias...")
+        
+        # Get weights from config
+        weights = self.markets_config.get('weights', {})
+        
+        # Use commodity weights as default
+        ranking_weights = weights.get('commodities', {
+            'cot_net': 0.25,
+            'cot_index': 0.30,
+            'valuation': 0.25,
+            'seasonality': 0.10
+        })
+        
+        # Rank all markets
+        ranked_results = rank_all_markets(self.results, ranking_weights)
+        self.results['ranked_results'] = ranked_results
+        
+        logger.info("✓ Market ranking complete")
+    
     def _run_technical(self):
         """Run technical zone analysis"""
         logger.info("Technical analysis placeholder...")
-        # Phase 4 feature
+        # Phase 5 feature
         pass
