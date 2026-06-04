@@ -1,6 +1,6 @@
 """
 Weekly Scan Orchestrator
-Coordinates all analysis engines
+Coordinates all analysis engines + technical zones
 """
 
 import logging
@@ -50,8 +50,8 @@ class WeeklyScan:
         logger.info("Phase 7: Ranking markets...")
         self._rank_markets()
         
-        logger.info("Phase 8: Running technical analysis...")
-        self._run_technical()
+        logger.info("Phase 8: Detecting technical zones...")
+        self._detect_technical_zones()
         
         return self.results
     
@@ -65,13 +65,10 @@ class WeeklyScan:
             'stocks': [],
             'cot_data': {},
             'ranked_results': {},
+            'technical_zones': {},
             'summary': {
                 'total_markets': 0,
-                'strong_bullish': 0,
-                'bullish': 0,
-                'neutral': 0,
-                'bearish': 0,
-                'strong_bearish': 0
+                'actionable_with_zones': 0
             }
         }
         logger.info("✓ Scan initialized")
@@ -80,7 +77,6 @@ class WeeklyScan:
         """Load COT data for all markets"""
         logger.info("Loading COT data from CFTC...")
         
-        # Get all symbols that have CFTC codes
         all_markets = []
         all_markets.extend(self.markets_config.get('commodities', []))
         all_markets.extend(self.markets_config.get('fx_futures', []))
@@ -88,7 +84,6 @@ class WeeklyScan:
         
         symbols = [market['display_name'] for market in all_markets]
         
-        # Load COT data for each symbol
         cot_data = self.cot_loader.load_all_markets(symbols)
         self.results['cot_data'] = cot_data
         
@@ -105,22 +100,13 @@ class WeeklyScan:
             symbol = market['display_name']
             logger.info(f"  → {symbol}")
             
-            # Get COT data
             cot_data = self.results['cot_data'].get(symbol, {})
             
-            # Analyze COT Net
             cot_net_result = analyze_cot_net(cot_data, symbol)
-            
-            # Analyze COT Index
             cot_index_result = analyze_cot_index(cot_data, symbol)
-            
-            # Analyze Valuation
             valuation_result = analyze_valuation(symbol, 'commodity')
-            
-            # Analyze Seasonality
             seasonality_result = analyze_seasonality(symbol, 'commodity')
             
-            # Combine results
             result = {
                 'symbol': symbol,
                 'asset_class': 'commodity',
@@ -146,22 +132,13 @@ class WeeklyScan:
             symbol = market['display_name']
             logger.info(f"  → {symbol}")
             
-            # Get COT data
             cot_data = self.results['cot_data'].get(symbol, {})
             
-            # Analyze COT Net
             cot_net_result = analyze_cot_net(cot_data, symbol)
-            
-            # Analyze COT Index
             cot_index_result = analyze_cot_index(cot_data, symbol)
-            
-            # Analyze Valuation (vs DXY)
             valuation_result = analyze_valuation(symbol, 'forex')
-            
-            # Analyze Seasonality
             seasonality_result = analyze_seasonality(symbol, 'forex')
             
-            # Combine results
             result = {
                 'symbol': symbol,
                 'asset_class': 'forex',
@@ -187,10 +164,7 @@ class WeeklyScan:
             symbol = market['display_name']
             logger.info(f"  → {symbol}")
             
-            # Analyze Valuation (vs ZB1!)
             valuation_result = analyze_valuation(symbol, 'index')
-            
-            # Analyze Seasonality (election cycle + decennial)
             seasonality_result = analyze_seasonality(symbol, 'index')
             
             result = {
@@ -216,10 +190,7 @@ class WeeklyScan:
             symbol = market['display_name']
             logger.info(f"  → {symbol}")
             
-            # Analyze Valuation (vs ZB1!)
             valuation_result = analyze_valuation(symbol, 'stock')
-            
-            # Analyze Seasonality (election cycle + decennial)
             seasonality_result = analyze_seasonality(symbol, 'stock')
             
             result = {
@@ -238,10 +209,8 @@ class WeeklyScan:
         """Rank all markets by fundamental bias"""
         logger.info("Ranking markets by fundamental bias...")
         
-        # Get weights from config
         weights = self.markets_config.get('weights', {})
         
-        # Use commodity weights as default
         ranking_weights = weights.get('commodities', {
             'cot_net': 0.25,
             'cot_index': 0.30,
@@ -249,14 +218,17 @@ class WeeklyScan:
             'seasonality': 0.10
         })
         
-        # Rank all markets
         ranked_results = rank_all_markets(self.results, ranking_weights)
         self.results['ranked_results'] = ranked_results
         
         logger.info("✓ Market ranking complete")
     
-    def _run_technical(self):
-        """Run technical zone analysis"""
-        logger.info("Technical analysis placeholder...")
-        # Phase 5 feature
-        pass
+    def _detect_technical_zones(self):
+        """Detect technical S/D zones (placeholder for Phase 5)"""
+        logger.info("Technical zone detection - PLACEHOLDER")
+        logger.info("Ready for zone detection when price data is available")
+        
+        self.results['technical_zones'] = {
+            'status': 'PLACEHOLDER',
+            'note': 'Requires real OHLC price data integration'
+        }
